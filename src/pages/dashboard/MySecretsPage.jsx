@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 export default function MySecretsPage() {
    const { user } = useAuth();
    const [secrets, setSecrets] = useState([]);
-   const [loading, setLoading] = useState(false);
+   const [loading, setLoading] = useState(true); // Start with loading true to show loader on initial load
    const [error, setError] = useState('');
    const [expandedId, setExpandedId] = useState(null);
 
@@ -152,7 +152,7 @@ export default function MySecretsPage() {
             {loading && secrets.length === 0 && (
                <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                   <Loader2 className="w-8 h-8 animate-spin mb-2" />
-                  <span className="text-sm font-bold">Loading History...</span>
+                  <span className="text-sm font-bold">Fetching secrets history...</span>
                </div>
             )}
 
@@ -169,7 +169,7 @@ export default function MySecretsPage() {
             {!loading && secrets.length === 0 && !error && (
                <div className="text-center py-20 text-slate-400">
                   <p className="text-lg font-bold mb-1">No Secrets Found</p>
-                  <p className="text-sm">Create a new secret to see it here.</p>
+                  <p className="text-sm">You haven't created any secrets yet. Create your first secret to see it here.</p>
                </div>
             )}
 

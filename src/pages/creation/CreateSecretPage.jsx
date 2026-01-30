@@ -38,6 +38,24 @@ export default function CreateSecretPage() {
 
    const fileInputRef = useRef(null);
 
+   // Minimum expiry (1 hour from now) - updated every minute
+   const [minExpiry, setMinExpiry] = useState('');
+
+   // Update minExpiry every minute to keep it current
+   useEffect(() => {
+      const updateMinExpiry = () => {
+         const oneHourFromNow = new Date();
+         oneHourFromNow.setHours(oneHourFromNow.getHours() + 1);
+         const minIso = oneHourFromNow.toLocaleString('sv').slice(0, 16).replace(' ', 'T');
+         setMinExpiry(minIso);
+      };
+
+      updateMinExpiry(); // Set initial value
+      const interval = setInterval(updateMinExpiry, 60000); // Update every minute
+
+      return () => clearInterval(interval);
+   }, []);
+
    // Initialize Default Expiry (24 hours from now)
    useEffect(() => {
       const tomorrow = new Date();
@@ -386,6 +404,7 @@ export default function CreateSecretPage() {
                         <input
                            type="datetime-local"
                            value={settings.expiresAt}
+                           min={minExpiry}
                            onChange={e => setSettings({ ...settings, expiresAt: e.target.value })}
                            className="w-full p-2.5 rounded-lg border border-slate-200 text-sm font-medium focus:border-black outline-none transition-colors"
                         />
