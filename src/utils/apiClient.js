@@ -48,19 +48,42 @@ export function serializeQueryParams(params) {
 
 /**
  * Standard API request handler
+ * @param {Object} options
+ * @param {boolean} [options.silentOnDuplicate=false] - If true, silently abort and replace duplicate requests without confirmation
  */
-export async function apiRequest({ url, method = 'GET', params = null, headers = {}, requestId, onSuccess, returnResponse = true }) {
+export async function apiRequest({ url, method = 'GET', params = null, headers = {}, requestId, onSuccess, returnResponse = true, silentOnDuplicate = false }) {
    const serializedParams = serializeQueryParams(params);
    const requestKey = buildRequestKey(url, serializedParams, requestId);
 
    const existing = inFlightRequests.find(r => r.key === requestKey);
 
    if (existing) {
-      const proceed = window.confirm('A similar request is already running. Start a new one instead?');
-      if (!proceed) return;
+      // If silentOnDuplicate is true, just abort the existing request without asking
+      // This is useful for React StrictMode double-renders and page refreshes
+      if (silentOnDuplicate) {
+         existing.controller.abort();
+         inFlightRequests.splice(inFlightRequests.indexOf(existing), 1);
+      } else {
+         // Use toast confirmation instead of window.confirm
+         // Wrapped in try-catch to prevent toast errors from breaking API functionality
+         let proceed = true;
+         try {
+            const { toast } = await import('./toast.js');
+            proceed = await toast.confirm('A similar request is already running. Start a new one instead?', {
+               confirmOkText: 'Start New',
+               confirmRejectText: 'Cancel',
+               color: 'warning'
+            });
+         } catch (toastError) {
+            console.warn('Toast confirmation failed, proceeding with request:', toastError);
+            proceed = true; // Fallback: proceed if toast fails
+         }
 
-      existing.controller.abort();
-      inFlightRequests.splice(inFlightRequests.indexOf(existing), 1);
+         if (!proceed) return;
+
+         existing.controller.abort();
+         inFlightRequests.splice(inFlightRequests.indexOf(existing), 1);
+      }
    }
 
    const controller = new AbortController();

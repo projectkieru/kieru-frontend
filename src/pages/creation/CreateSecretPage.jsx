@@ -30,8 +30,8 @@ export default function CreateSecretPage() {
    const [showSettings, setShowSettings] = useState(false);
    const [settings, setSettings] = useState({
       maxViews: 1,
-      showTimeBomb: false, // Visual only: does the user see the timer?
-      viewTimeSeconds: 10, // Functional: how long does it last?
+      showTimeBomb: true, // Visual only: does the user see the timer?
+      viewTimeSeconds: 60, // Functional: how long does it last?
       expiresAt: '', // New: DateTime string
       password: '' // Optional Password
    });
@@ -427,7 +427,7 @@ export default function CreateSecretPage() {
                         <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">View Duration (Sec)</label>
                         <input
                            type="number"
-                           min="5"
+                           min="10"
                            value={settings.viewTimeSeconds}
                            onChange={e => setSettings({ ...settings, viewTimeSeconds: parseInt(e.target.value) || 5 })}
                            className="w-full p-2.5 rounded-lg border border-slate-200 text-sm font-medium focus:border-black outline-none transition-colors"

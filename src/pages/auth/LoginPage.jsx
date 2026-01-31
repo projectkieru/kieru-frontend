@@ -5,6 +5,7 @@ import { User, Lock, Mail, Chrome, UserCircle, ArrowRight, Loader2, AlertTriangl
 import { auth } from '../../utils/firebase';
 import { AuthService } from '../../utils/authService';
 import { APP_LOGO_IMAGE } from '../../config/navigationConfig';
+import { toast } from '../../utils/toast';
 
 const Button = ({ children, onClick, variant = 'primary', className = '', type = 'button', icon: Icon, loading = false }) => {
    const baseStyle =
@@ -41,6 +42,22 @@ const Input = ({ type, placeholder, value, onChange, icon: Icon, required, right
    </div>
 );
 
+// Full-screen sync overlay component
+const SyncOverlay = () => (
+   <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm">
+      <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 flex flex-col items-center gap-4 shadow-2xl animate-in fade-in zoom-in-95 duration-300">
+         <div className="relative">
+            <Loader2 className="w-12 h-12 text-blue-400 animate-spin" />
+            <div className="absolute inset-0 bg-blue-400/20 rounded-full blur-xl" />
+         </div>
+         <div className="text-center">
+            <p className="text-white font-bold text-lg">Syncing your account...</p>
+            <p className="text-white/60 text-sm mt-1">Please wait while we set things up</p>
+         </div>
+      </div>
+   </div>
+);
+
 export default function LoginPage() {
    // Initialize with the background image from public folder (Vite serves public folder at root)
    const [bgImage, setBgImage] = useState('/login_bg.png');
@@ -50,6 +67,7 @@ export default function LoginPage() {
 
    // UI State
    const [loading, setLoading] = useState(false);
+   const [syncing, setSyncing] = useState(false); // Separate state for backend sync
    const [error, setError] = useState('');
    const [successMsg, setSuccessMsg] = useState('');
    const [infoMsg, setInfoMsg] = useState('');
@@ -65,11 +83,21 @@ export default function LoginPage() {
    }, []);
 
    const syncWithBackend = async firebaseUser => {
+      setSyncing(true);
       try {
          const token = await firebaseUser.getIdToken();
-         return await AuthService.backendLogin(token);
+         const result = await AuthService.backendLogin(token);
+         setSyncing(false);
+         return result;
       } catch (error) {
+         setSyncing(false);
          console.error('Backend Sync Failed:', error);
+         // Show error toast
+         try {
+            toast.error('Login successful, but server connection failed. Please try again.');
+         } catch (toastErr) {
+            console.warn('Toast error:', toastErr);
+         }
          setError('Login successful, but server connection failed.');
          throw error;
       }
@@ -170,6 +198,8 @@ export default function LoginPage() {
 
    return (
       <div className="min-h-screen w-full relative flex items-center justify-center overflow-hidden bg-gray-900">
+         {/* Sync Overlay - Shows during backend sync */}
+         {syncing && <SyncOverlay />}
          {/* Background */}
          <div className="absolute inset-0 z-0">
             {bgImage ? (
